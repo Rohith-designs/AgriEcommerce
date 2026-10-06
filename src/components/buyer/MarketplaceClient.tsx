@@ -1,10 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronDown, Search, SlidersHorizontal } from "lucide-react";
+import Link from "next/link";
+import { ChevronDown, Search, SlidersHorizontal, Sparkles } from "lucide-react";
 import { categories } from "@/lib/demo-data";
 import { useListings } from "@/lib/useListings";
 import { parseMarketSearch } from "@/lib/search";
+import { parseBuyerIntent } from "@/lib/ai";
+import { matchListings } from "@/lib/matching";
 import { ProduceCard } from "./ProduceCard";
 import { useLanguage } from "@/components/shared/LanguageProvider";
 
@@ -16,6 +19,7 @@ export function MarketplaceClient() {
   const [sort, setSort] = useState("Best match");
   const data = useMemo(() => {
     const parsed = parseMarketSearch(query);
+    const intent = query.trim() ? parseBuyerIntent(query) : null;
     const activeCategory =
       category !== "All produce" ? category : parsed.category;
     const plainTerms = query
@@ -33,24 +37,35 @@ export function MarketplaceClient() {
         ? item.category === "Grains" &&
           /rice|paddy|basmati|sona/i.test(item.variety)
         : !activeCategory || item.category === activeCategory;
-    return listings
-      .filter((item) => {
-        const text =
-          `${item.variety} ${item.category} ${item.farmer} ${item.village}`.toLowerCase();
-        return (
-          matchesCategory(item) &&
-          (!parsed.priceCeiling || item.price <= parsed.priceCeiling) &&
-          (!plainTerms.length ||
-            plainTerms.some((term) => text.includes(term)))
-        );
-      })
-      .sort((a, b) =>
-        sort === "Price: low to high"
-          ? a.price - b.price
-          : sort === "Distance"
-            ? a.distance - b.distance
-            : b.rating - a.rating,
+    const filtered = listings.filter((item) => {
+      const text =
+        `${item.variety} ${item.category} ${item.farmer} ${item.village}`.toLowerCase();
+      return (
+        matchesCategory(item) &&
+        (!parsed.priceCeiling || item.price <= parsed.priceCeiling) &&
+        (!plainTerms.length ||
+          plainTerms.some((term) => text.includes(term)))
       );
+    });
+    if (sort === "Best match" && intent && intent.fieldsDetected.length >= 1) {
+      const scored = matchListings(filtered, intent);
+      const order = new Map(
+        scored.map((row, i) => [row.listing.id, i]),
+      );
+      return [...filtered].sort((a, b) => {
+        const ai = order.get(a.id) ?? 999;
+        const bi = order.get(b.id) ?? 999;
+        if (ai !== bi) return ai - bi;
+        return b.rating - a.rating;
+      });
+    }
+    return filtered.sort((a, b) =>
+      sort === "Price: low to high"
+        ? a.price - b.price
+        : sort === "Distance"
+          ? a.distance - b.distance
+          : b.rating - a.rating,
+    );
   }, [query, category, sort, listings]);
 
   const sortOptions = ["Best match", "Price: low to high", "Distance"];
@@ -65,6 +80,16 @@ export function MarketplaceClient() {
           <h1 className="mt-2 font-display text-3xl font-bold tracking-tight sm:text-4xl">
             {t("Buy closer to the source.")}
           </h1>
+          <p className="mt-3 text-sm text-slate-600 dark:text-neutral-300">
+            {t("Best match")} now uses multi-criteria AI scoring when you
+            describe qty, budget, or grade.{" "}
+            <Link
+              href="/ai"
+              className="inline-flex items-center gap-1 font-bold text-emerald-800 dark:text-emerald-400"
+            >
+              <Sparkles size={14} /> {t("AI Match")}
+            </Link>
+          </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <label className="flex h-12 flex-1 items-center gap-3 rounded-lg border border-slate-300 bg-stone-50 px-4 dark:border-neutral-700 dark:bg-neutral-900">
               <Search size={18} className="text-slate-500" />

@@ -59,6 +59,12 @@ export default function Home() {
                   {t("Browse today's harvest")} <ArrowRight size={17} />
                 </Link>
                 <Link
+                  href="/ai"
+                  className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-emerald-900 px-5 py-3 text-sm font-bold text-amber-200"
+                >
+                  {t("AI Match")}
+                </Link>
+                <Link
                   href="/register"
                   className="rounded-lg border border-emerald-700 px-5 py-3 text-sm font-bold"
                 >

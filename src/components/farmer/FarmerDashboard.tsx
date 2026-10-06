@@ -7,13 +7,14 @@ import {
   BarChart3,
   Package,
   Plus,
+  Sparkles,
   Trash2,
   TrendingUp,
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { formatCurrency } from "@/lib/utils";
-import { priceAdvisory } from "@/lib/pricing";
+import { farmerNet, priceAdvisory } from "@/lib/pricing";
 import { useLanguage } from "@/components/shared/LanguageProvider";
 import { useListings } from "@/lib/useListings";
 
@@ -32,10 +33,26 @@ export function FarmerDashboard() {
       deleteListing(id);
     }
   };
-  const advice = priceAdvisory(28, 30);
+  const focus = stock[0];
+  const advice = focus
+    ? priceAdvisory(focus.price, focus.suggested || focus.price)
+    : priceAdvisory(28, 30);
+  const listedPrice = focus?.price ?? 28;
+  const marketPrice = focus?.suggested ?? 30;
+  const sampleNet = focus
+    ? farmerNet(focus.price, Math.min(100, focus.quantity), focus.distance)
+    : farmerNet(28, 100, 18);
+  const estEarnings = stock.reduce((sum, l) => {
+    const n = farmerNet(l.price, Math.min(l.quantity, 200), l.distance);
+    return sum + Math.max(0, n.net);
+  }, 0);
   const stats = [
     { Icon: Package, value: String(visible.length), label: t("Active listings") },
-    { Icon: TrendingUp, value: "₹18,430", label: t("Est. earnings") },
+    {
+      Icon: TrendingUp,
+      value: formatCurrency(estEarnings || sampleNet.net),
+      label: t("Est. earnings"),
+    },
     { Icon: ArrowUpRight, value: "2", label: t("Orders in progress") },
     { Icon: AlertTriangle, value: "1", label: t("Stock running low") },
   ];
@@ -56,6 +73,12 @@ export function FarmerDashboard() {
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
+          <Link
+            href="/ai"
+            className="inline-flex items-center gap-2 rounded-lg border border-amber-400 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-950 dark:bg-amber-950 dark:text-amber-100"
+          >
+            <Sparkles size={17} /> {t("AI Match")}
+          </Link>
           <Link
             href="/dashboard/analytics"
             className="inline-flex items-center gap-2 rounded-lg border border-emerald-700 px-4 py-3 text-sm font-bold text-emerald-800 dark:text-emerald-300"
@@ -131,24 +154,39 @@ export function FarmerDashboard() {
             {t("Price advisory")}
           </p>
           <h2 className="mt-2 font-display text-xl font-bold">
-            {t("Tomato market position")}
+            {focus
+              ? `${focus.variety} · ${advice.label}`
+              : t("Tomato market position")}
           </h2>
           <div className="mt-5 flex items-end gap-3">
             <span className="font-mono text-3xl font-bold text-emerald-800 dark:text-emerald-400">
-              ₹28
+              {formatCurrency(listedPrice)}
             </span>
             <span className="pb-1 text-sm text-slate-500 dark:text-neutral-400">
               {t("your listing / kg")}
             </span>
           </div>
           <p className="mt-2 text-sm text-slate-600 dark:text-neutral-300">
-            Regional average is <span className="font-mono">₹30/kg</span>.
-            Your price is {Math.abs(advice.delta)}% below market.
+            Regional average is{" "}
+            <span className="font-mono">{formatCurrency(marketPrice)}/kg</span>.
+            Your price is {Math.abs(advice.delta)}%{" "}
+            {advice.delta >= 0 ? "above" : "below"} market.
+          </p>
+          <p className="mt-2 font-mono text-xs text-slate-500 dark:text-neutral-400">
+            Sample net (100 kg): {formatCurrency(sampleNet.net)} after logistics
+            + fee
           </p>
           <div className="mt-4 rounded-lg bg-amber-50 p-3 text-sm leading-5 text-amber-950 dark:bg-amber-950 dark:text-amber-100">
-            Demand is trending up and your produce has 4 days of shelf life
-            left — consider listing now.
+            {t(
+              "Use AI Match to describe your produce in plain language, compare buyer net payouts, and plan multi-stop delivery.",
+            )}
           </div>
+          <Link
+            href="/ai"
+            className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-emerald-800 dark:text-emerald-400"
+          >
+            <Sparkles size={14} /> {t("Open AI coordination desk")} →
+          </Link>
         </Card>
       </div>
     </main>

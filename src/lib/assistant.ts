@@ -212,11 +212,21 @@ export function answerQuery(
     };
   }
 
+  if (has(/\b(ai match|opportunit|net profit|who.*(buy|buyer)|match.*(buyer|farm)|coordination)\b/)) {
+    return {
+      blocks: [
+        text(
+          `${prefix}Open AI Match (/ai): describe produce or demand in plain language. The agent structures your profile, ranks multi-criteria matches, shows farmer net after logistics, and suggests a multi-stop route across top buyers.`,
+        ),
+      ],
+    };
+  }
+
   if (has(/\b(sell|selling|list|listing|publish|become.*seller|add.*(crop|produce|stock)|farmer.*(join|register))\b/)) {
     return {
       blocks: [
         text(
-          `${prefix}To sell: open Sell produce → New listing, enter variety, quantity (min 20 kg bulk), grade, availability dates and expected ₹/kg, then publish. Your lot goes live on the market board instantly and buyers can add it to cart.`,
+          `${prefix}Fastest path: open AI Match and type something like “200 kg Grade-A tomatoes near Warangal, want ₹28/kg this week” — then publish. Or use Sell produce → New listing for the full form.`,
         ),
       ],
     };

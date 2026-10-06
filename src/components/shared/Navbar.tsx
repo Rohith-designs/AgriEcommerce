@@ -28,6 +28,9 @@ export function Navbar() {
           <nav className="hidden items-center gap-5 text-sm font-semibold text-slate-600 dark:text-neutral-300 md:flex">
             <Link href="/marketplace">{t("Buy produce")}</Link>
             <Link href="/dashboard">{t("Sell produce")}</Link>
+            <Link href="/ai" className="text-emerald-800 dark:text-emerald-400">
+              {t("AI Match")}
+            </Link>
             <Link href="/articles">{t("Learn")}</Link>
             <Link href="/analytics">{t("Analytics")}</Link>
           </nav>

@@ -1,9 +1,12 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useLanguage } from "@/components/shared/LanguageProvider";
 import { addMyListing } from "@/lib/listings-store";
+import { ingestFarmerOffer, isoDaysFromNow } from "@/lib/ai";
 
 const CATEGORIES = ["Vegetables", "Fruits", "Grains", "Pulses", "Spices"];
 
@@ -11,6 +14,29 @@ export function ListingForm() {
   const { t } = useLanguage();
   const router = useRouter();
   const [error, setError] = useState("");
+  const [nl, setNl] = useState("");
+  const [variety, setVariety] = useState("Hybrid Tomato");
+  const [category, setCategory] = useState("Vegetables");
+  const [quantity, setQuantity] = useState("100");
+  const [grade, setGrade] = useState("Grade A");
+  const [price, setPrice] = useState("28");
+  const [from, setFrom] = useState(isoDaysFromNow(0));
+  const [until, setUntil] = useState(isoDaysFromNow(4));
+  const [suggested, setSuggested] = useState(30);
+
+  const applyNl = () => {
+    if (!nl.trim()) return;
+    const offer = ingestFarmerOffer(nl);
+    if (offer.variety !== "Unknown produce") setVariety(offer.variety);
+    if (offer.category) setCategory(offer.category);
+    if (offer.quantity > 0) setQuantity(String(offer.quantity));
+    setGrade(offer.grade);
+    if (offer.expectedPrice > 0) setPrice(String(offer.expectedPrice));
+    setFrom(offer.availableFrom);
+    setUntil(offer.availableUntil);
+    if (offer.marketPrice > 0) setSuggested(offer.marketPrice);
+  };
+
   const submit = (form: FormData) => {
     const quantity = Number(form.get("quantity"));
     const price = Number(form.get("price"));
@@ -45,11 +71,35 @@ export function ListingForm() {
   };
   return (
     <form action={submit} className="grid gap-5">
+      <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950">
+        <div className="flex items-center gap-2 text-sm font-bold text-emerald-900 dark:text-emerald-200">
+          <Sparkles size={16} /> {t("AI Match")} — describe produce in plain language
+        </div>
+        <textarea
+          value={nl}
+          onChange={(e) => setNl(e.target.value)}
+          rows={2}
+          placeholder="e.g. 200 kg Grade-A tomatoes near Warangal, want ₹28/kg this week"
+          className="mt-3 w-full rounded-lg border border-emerald-200 bg-white p-3 text-sm font-normal dark:border-emerald-800 dark:bg-neutral-950"
+        />
+        <div className="mt-3 flex flex-wrap gap-3">
+          <Button type="button" variant="secondary" onClick={applyNl}>
+            Fill form from text
+          </Button>
+          <Link
+            href="/ai"
+            className="inline-flex items-center text-sm font-bold text-emerald-800 dark:text-emerald-400"
+          >
+            Full opportunity desk →
+          </Link>
+        </div>
+      </div>
       <label className="text-sm font-semibold">
         {t("Produce variety")}
         <input
           name="variety"
-          defaultValue="Hybrid Tomato"
+          value={variety}
+          onChange={(e) => setVariety(e.target.value)}
           className="mt-2 w-full rounded-lg border border-slate-300 p-3 font-normal"
         />
       </label>
@@ -59,7 +109,8 @@ export function ListingForm() {
           <input
             name="quantity"
             type="number"
-            defaultValue="100"
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
             className="mt-2 w-full rounded-lg border border-slate-300 p-3 font-normal"
           />
         </label>
@@ -78,11 +129,14 @@ export function ListingForm() {
           {t("Grade")}
           <select
             name="grade"
+            value={grade}
+            onChange={(e) => setGrade(e.target.value)}
             className="mt-2 w-full rounded-lg border border-slate-300 p-3 font-normal"
           >
             <option>Grade A</option>
             <option>Grade B</option>
             <option>Grade C</option>
+            <option>Grade 1</option>
           </select>
         </label>
       </div>
@@ -90,6 +144,8 @@ export function ListingForm() {
         {t("Category")}
         <select
           name="category"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
           className="mt-2 w-full rounded-lg border border-slate-300 p-3 font-normal"
         >
           {CATEGORIES.map((c) => (
@@ -105,7 +161,8 @@ export function ListingForm() {
           <input
             name="from"
             type="date"
-            defaultValue="2026-09-14"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
             className="mt-2 w-full rounded-lg border border-slate-300 p-3 font-normal"
           />
         </label>
@@ -114,7 +171,8 @@ export function ListingForm() {
           <input
             name="until"
             type="date"
-            defaultValue="2026-09-18"
+            value={until}
+            onChange={(e) => setUntil(e.target.value)}
             className="mt-2 w-full rounded-lg border border-slate-300 p-3 font-normal"
           />
         </label>
@@ -135,11 +193,12 @@ export function ListingForm() {
           <input
             name="price"
             type="number"
-            defaultValue="28"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
             className="mt-2 w-full rounded-lg border border-slate-300 p-3 font-normal"
           />
           <span className="mt-2 block font-mono text-xs text-emerald-800">
-            {t("Regional suggested price: ₹30/kg")}
+            Regional suggested price: ₹{suggested}/kg
           </span>
         </label>
       </div>

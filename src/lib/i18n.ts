@@ -17,6 +17,12 @@ type Dict = Record<string, string>;
 const hi: Dict = {
   "Buy produce": "उपज खरीदें",
   "Sell produce": "उपज बेचें",
+  "AI Match": "एआई मैच",
+  "Match produce to buyers — intelligently":
+    "उपज को खरीदारों से बुद्धिमत्ता से मिलाएँ",
+  "Open AI coordination desk": "एआई समन्वय डेस्क खोलें",
+  "Use AI Match to describe your produce in plain language, compare buyer net payouts, and plan multi-stop delivery.":
+    "सादे शब्दों में उपज बताने, खरीदार शुद्ध भुगतान तुलना और मल्टी-स्टॉप डिलीवरी योजना के लिए एआई मैच उपयोग करें।",
   Learn: "सीखें",
   "Direct produce exchange · India": "प्रत्यक्ष उपज विनिमय · भारत",
   "Better prices start at the farm gate.":
